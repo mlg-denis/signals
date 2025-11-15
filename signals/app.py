@@ -2,7 +2,8 @@ import streamlit as st
 import financeinfo as fi
 from backtesting import run_backtest
 from plotter import get_fig
-import indicators as indct
+import indicators.compute as indct
+from indicators.definitions import INDICATORS
 
 def handle(ticker, period, interval):
     if interval == "1m":
@@ -12,16 +13,12 @@ def handle(ticker, period, interval):
     
     data = fi.fetch(ticker, period, interval)
 
+    # for the checked boxes, apply their respective functions to the data and keep the result to add to the graph
     indicators = {}
-    for name, enabled in indicator_checkboxes().items():
+    for label, enabled in indicator_checkboxes().items():
         if not enabled:
             continue
-        if "SMA" in name:
-            window = int(name[3:])
-            indicators[name] = indct.compute_sma(data["Close"], window)
-        elif "EMA" in name:
-            span = int(name[3:])
-            indicators[name] = indct.compute_ema(data["Close"], span)
+        indicators[label] = INDICATORS[label](data) 
 
     fig = get_fig(data, ticker, indicators, True)
     st.pyplot(fig)
@@ -30,16 +27,10 @@ def load_css(filename: str):
     with open(filename) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-def indicator_checkboxes():
+# pulls the names from INDICATORS and creates a checkbox for eacah one
+def indicator_checkboxes() -> dict[str, bool]:
     st.sidebar.header("Technical indicators")
-
-    indicators = {
-        "SMA20": st.sidebar.checkbox("SMA20"),
-        "SMA50": st.sidebar.checkbox("SMA50"),
-        "EMA12": st.sidebar.checkbox("EMA12"),
-        "EMA26": st.sidebar.checkbox("EMA26"),
-    }
-    return indicators
+    return {name: st.sidebar.checkbox(name) for name in INDICATORS.keys()}
 
 def main():
     st.set_page_config(layout="wide")

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from indicators import detect_crossovers
+from indicators.compute import detect_crossovers
 
 signal_size = 100
 

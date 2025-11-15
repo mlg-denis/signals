@@ -1,5 +1,5 @@
 import financeinfo as fi
-import indicators as indc
+import indicators.compute as indc
 import plotter as p
 import backtesting as bt
 
