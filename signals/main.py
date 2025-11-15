@@ -4,7 +4,8 @@ import plotter as p
 import backtesting as bt
 
 def main():
-    ticker = "AAPL"
+    '''
+    ticker = "6896.HK"
     data = fi.fetch(ticker)
     closes = data["Close"]
 
@@ -17,6 +18,8 @@ def main():
     data[column] = indc.detect_crossovers(sma20, sma50)
 
     bt.run_backtest(data, column)
+    '''
+    print(fi.get_index_constituents("sp500"))
 
 if __name__ == "__main__":
     main()
