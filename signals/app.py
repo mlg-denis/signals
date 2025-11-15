@@ -17,27 +17,40 @@ def handle(ticker, period, interval):
     st.pyplot(fig)
 
 def main():
-    index = "sp500"
-    tickers = fi.get_index_constituents(index) + ["VUAG.L"]
-    ticker = st.selectbox(
-        "Select a ticker",
-        tickers,
-        index=None
-    )
-    
-    periods = ["1d","5d","1mo","3mo","6mo","YTD","1y","2y","5y","10y","Max"]
-    period = st.select_slider(
-        "Time range",
-        periods,
-        value = "1y"
-    ).lower()
+    st.set_page_config(layout="wide")
 
-    intervals = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1d", "5d", "1wk", "1mo", "3mo"]
-    interval = st.select_slider(
-        "Interval",
-        intervals,
-        value = "1d"
-    )
+    with st.container():
+        index = "sp500"
+        tickers = fi.get_index_constituents(index) + ["VUAG.L"]
+        ticker = st.selectbox(
+            "Select a ticker",
+            tickers,
+            index=0
+        )
+        
+        periods = ["1d","5d","1mo","3mo","6mo","YTD","1y","2y","5y","10y","Max"]
+        period = st.radio(
+            "Time range",
+            periods,
+            index=6,
+            horizontal=True
+        ).lower()
+
+        intervals = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1d", "5d", "1wk", "1mo", "3mo"]
+        interval = st.radio(
+            "Interval",
+            intervals,
+            index=7,
+            horizontal=True
+        )
+
+    st.divider()
+
+    st.markdown("""
+    <style>
+    .block-container {max-width: 1100px; padding-left: 2rem; padding-right: 2rem;}
+    </style>
+    """, unsafe_allow_html=True)    
 
     if ticker:
         handle(ticker, period, interval)        

@@ -21,5 +21,5 @@ def get_index_constituents(index: str) -> list[str]:
     except Exception as e:
         print(f"Error gathering {index} constituents: {e}")    
     else:
-        data = dfs[0] # this happens to be the table containing the constituents
+        data = dfs[0] # this happens to be the table at this url containing the constituents
         return list(data["Symbol"]) 

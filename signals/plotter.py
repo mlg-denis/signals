@@ -72,4 +72,4 @@ def get_fig(data: pd.DataFrame, ticker: str,
     ax.set_xlabel("Date")
     ax.set_ylabel("Price, USD")
     ax.legend()
-    return fig  
+    return fig
