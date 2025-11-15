@@ -10,10 +10,10 @@ def compute_macd(closes: pd.Series):
     macd = compute_ema(closes, 12) - compute_ema(closes, 26)
     signal = compute_ema(macd, 9)
     hist = macd - signal
-    return {"MACD Line": macd, "Signal Line": signal, "MACD Hist": hist}
+    return {"MACD": macd, "Signal": signal, "MACD_hist": hist}
 
 # crossover logic - check for each day whether short_avg > long_avg
 # then to detect a crossover, check if this is different to the previous day 
-def detect_crossovers(short_avg: pd.Series, long_avg: pd.Series) -> pd.Series:
-    signal = (short_avg > long_avg).astype(int) # 1 if true; 0 if false
+def detect_crossovers(short: pd.Series, long: pd.Series) -> pd.Series:
+    signal = (short > long).astype(int) # 1 if true; 0 if false
     return signal.diff() # return the crossovers

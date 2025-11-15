@@ -28,7 +28,7 @@ def handle(ticker, period, interval):
         else:
             flattened[label] = value    
 
-    fig = get_fig(data, ticker, flattened, True)
+    fig = get_fig(data, ticker, flattened)
     st.pyplot(fig)
 
 def load_css(filename: str):
