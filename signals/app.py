@@ -12,20 +12,18 @@ def handle(ticker, period, interval):
     
     data = fi.fetch(ticker, period, interval)
 
-    indicators = indicator_checkboxes()
-    for name, enabled in indicators.items():
+    indicators = {}
+    for name, enabled in indicator_checkboxes().items():
         if not enabled:
             continue
         if "SMA" in name:
             window = int(name[3:])
-            data[name] = indct.compute_sma(data["Close"], window)
+            indicators[name] = indct.compute_sma(data["Close"], window)
         elif "EMA" in name:
             span = int(name[3:])
-            data[name] = indct.compute_ema(data["Close"], span)
+            indicators[name] = indct.compute_ema(data["Close"], span)
 
-    ema12 = indct.compute_ema(data["Close"],12)
-    ema26 = indct.compute_ema(data["Close"],26)
-    fig = get_fig(data, ticker, ema12, "EMA12", ema26, "EMA26", True)
+    fig = get_fig(data, ticker, indicators, True)
     st.pyplot(fig)
 
 def load_css(filename: str):
