@@ -18,9 +18,17 @@ def handle(ticker, period, interval):
     for label, enabled in indicator_checkboxes().items():
         if not enabled:
             continue
-        indicators[label] = INDICATORS[label](data) 
+        indicators[label] = INDICATORS[label](data)
 
-    fig = get_fig(data, ticker, indicators, True)
+    # flatten potential dictionaries, e.g. MACD
+    flattened = {}
+    for label, value in indicators.items():
+        if isinstance(value, dict):
+            flattened.update(value) # add the dictionary to flattened
+        else:
+            flattened[label] = value    
+
+    fig = get_fig(data, ticker, flattened, True)
     st.pyplot(fig)
 
 def load_css(filename: str):
