@@ -7,3 +7,26 @@
     padding-left: 2rem;
     padding-right: 2rem;
 }
+
+/* Manage the spacing between elements on the sidebar */
+section[data-testid="stSidebar"] .stVerticalBlock {
+    width: 204px !important;
+    gap: 2px;
+    padding-right: 16px;
+    padding-left: 16px;
+    margin-right: 0px;
+    margin-left: 0px;
+}
+
+/* Allow enough room for heading to not look cramped */
+section[data-testid="stSidebar"] .stHeading{
+    width: 200px !important;
+}
+
+section[data-testid="stSidebar"] {
+    width: 256px !important;
+    padding-right: 0px !important;
+    padding-left: 0px !important;
+    margin-right: 0px !important;
+    margin-left: 0px !important;
+}

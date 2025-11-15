@@ -22,6 +22,13 @@ def load_css(filename: str):
 
 def main():
     st.set_page_config(layout="wide")
+    st.title("Dashboard")
+
+    st.sidebar.header("Technical indicators")
+    sma20 = st.sidebar.checkbox("SMA 20")
+    sma50 = st.sidebar.checkbox("SMA 50")
+    ema12 = st.sidebar.checkbox("EMA 12")
+    ema26 = st.sidebar.checkbox("EMA 26")
 
     with st.container():
         index = "sp500"
