@@ -6,11 +6,11 @@ def compute_sma(closes: pd.Series, window: int) -> pd.Series:
 def compute_ema(closes: pd.Series, span: int) -> pd.Series:
     return closes.ewm(span = span, adjust = False).mean()
 
-def compute_macd(closes: pd.Series):
+def compute_macd(closes: pd.Series) -> pd.DataFrame:
     macd = compute_ema(closes, 12) - compute_ema(closes, 26)
     signal = compute_ema(macd, 9)
     hist = macd - signal
-    return {"MACD": macd, "Signal": signal, "MACD_hist": hist}
+    return pd.DataFrame({"MACD": macd, "Signal": signal, "MACD_hist": hist})
 
 # crossover logic - check for each day whether short > long
 # then to detect a crossover, check if this is different to the previous day 

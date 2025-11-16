@@ -13,22 +13,14 @@ def handle(ticker, period, interval):
     
     data = fi.fetch(ticker, period.lower(), interval) # rectify difference between display case and parameter case ("Max" vs "max")
 
-    # for the checked boxes, apply their respective functions to the data and keep the result to add to the graph
-    indicators = {}
+    # only plot those indicators that have their checkboxes enabled
+    active_indicators = {}
     for label, enabled in indicator_checkboxes().items():
         if not enabled:
             continue
-        indicators[label] = INDICATORS[label]["fn"](data) # get the pd.Series for the indicator
+        active_indicators[label] = INDICATORS[label]   
 
-    # flatten potential dictionaries, e.g. MACD
-    flattened = {}
-    for label, value in indicators.items():
-        if isinstance(value, dict):
-            flattened.update(value) # add the dictionary to flattened
-        else:
-            flattened[label] = value    
-
-    fig = get_fig(data, ticker, flattened)
+    fig = get_fig(data, ticker, active_indicators)
     st.pyplot(fig)
 
 def load_css(filename: str):
