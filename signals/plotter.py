@@ -3,26 +3,50 @@ import pandas as pd
 from indicators.compute import detect_crossovers
 from definitions import CROSSOVER_PAIRS, IndicatorType
 
+#indicators: dict[str, dict[str, pd.Series | pd.DataFrame | str]
+def flatten_indicators(indicators, data: pd.DataFrame) -> dict[str, pd.Series]:
+    flattened = {}
+    for label, indicator in indicators.items():
+        result = indicator["fn"](data)
+
+        if isinstance(result, pd.DataFrame):
+            for col in result.columns:
+                flattened[col] = result[col]
+        else: flattened[label] = result
+    return flattened    
+
 # calculates any crossovers that need to be calculated based on the given indicators
-# plots any necessary crossover markers on the price line
-def plot_crossovers(data, indicators, ax):
+# plots any necessary crossover markers
+def plot_crossovers(data, indicators, axes, overlays, oscillators):
+
+    flattened = flatten_indicators(indicators,data) # turn pd.DataFrames into pd.Series
       
     for short, long in CROSSOVER_PAIRS:
-        if short in indicators and long in indicators:
-            crossovers = detect_crossovers(indicators[short],indicators[long])
+        if short in flattened and long in flattened:
+            crossovers = detect_crossovers(flattened[short],flattened[long])
 
             size = 7.5
+
+            if short in overlays or long in overlays:
+                ax = axes[0]  # main price axis
+                y = data["Close"]
+            else:
+                # find oscillator axis that matches one of the names
+                ax = next((a for a, (label, ind) in zip(axes[1:], oscillators.items())
+                        if label in (short, long)), axes[0])
+                y = flattened[short]
             
             ax.plot(
-                indicators[short].index[crossovers == 1],
-                data["Close"][crossovers == 1],
+                flattened[short].index[crossovers == 1],
+                y[crossovers == 1],
                 marker="^", color="green", linestyle="none", markersize = size, label="Bullish Crossover"
             )
             ax.plot(
-                indicators[short].index[crossovers == -1],
-                data["Close"][crossovers == -1],
+                flattened[short].index[crossovers == -1],
+                y[crossovers == -1],
                 marker="v", color="red", linestyle="none", markersize = size, label="Bearish Crossover"
             )
+            ax.legend()
 
 
 def get_fig(data: pd.DataFrame, ticker: str,
@@ -58,10 +82,8 @@ def get_fig(data: pd.DataFrame, ticker: str,
         df = oscillator["fn"](data)
         for col in df.columns:
             ax.plot(df[col], label=f"{col}")
-            ax.legend()
-        
 
-    plot_crossovers(data, indicators, main_ax)
+    plot_crossovers(data, indicators, axes, overlays, oscillators)
 
     main_ax.set_title(ticker)
     axes[-1].set_xlabel("Date") # so it's at the very bottom
