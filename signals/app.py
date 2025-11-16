@@ -3,7 +3,7 @@ import financeinfo as fi
 from backtesting import run_backtest
 from plotter import get_fig
 import indicators.compute as indct
-from indicators.definitions import INDICATORS
+from definitions import INDICATORS, VALID_INTERVALS
 
 def handle(ticker, period, interval):
     if interval == "1m":
@@ -11,7 +11,7 @@ def handle(ticker, period, interval):
     elif interval[-1] == 'm' or interval == "1h":
         assert period == "1d" or period == "5d" or period == "1mo", f"Cannot display {interval} interval on periods larger than 1mo."
     
-    data = fi.fetch(ticker, period, interval)
+    data = fi.fetch(ticker, period.lower(), interval) # rectify difference between display case and parameter case ("Max" vs "max")
 
     # for the checked boxes, apply their respective functions to the data and keep the result to add to the graph
     indicators = {}
@@ -55,19 +55,17 @@ def main():
             index=0
         )
         
-        periods = ["1d","5d","1mo","3mo","6mo","YTD","1y","2y","5y","10y","Max"]
         period = st.radio(
             "Time range",
-            periods,
-            index=6,
+            list(VALID_INTERVALS.keys()),
+            index=0,
             horizontal=True
-        ).lower()
+        )
 
-        intervals = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1d", "5d", "1wk", "1mo", "3mo"]
         interval = st.radio(
             "Interval",
-            intervals,
-            index=7,
+            VALID_INTERVALS[period],
+            index=0,
             horizontal=True
         )
 
