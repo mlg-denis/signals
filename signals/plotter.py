@@ -59,12 +59,11 @@ def get_fig(data: pd.DataFrame, ticker: str,
         match indicator["type"]:
             case IndicatorType.OVERLAY:
                 overlays[label] = indicator
-                #ax.plot(indicator, label=label, linestyle = "--", alpha = 0.35)
             case IndicatorType.OSCILLATOR:
                 oscillators[label] = indicator
 
     nplots = 1 + len(oscillators) # 1 main plot and one per oscillator
-    fig, axes = plt.subplots(nplots, sharex=True, figsize=(10, 5 + 2 * len(oscillators))) # height depends on number of oscillators
+    fig, axes = plt.subplots(nplots, sharex=False, figsize=(10, 5 + 2 * len(oscillators))) # height depends on number of oscillators
 
     if nplots == 1: # i.e. no oscillators
         axes = [axes]
@@ -86,7 +85,6 @@ def get_fig(data: pd.DataFrame, ticker: str,
     plot_crossovers(data, indicators, axes, overlays, oscillators)
 
     main_ax.set_title(ticker)
-    axes[-1].set_xlabel("Date") # so it's at the very bottom
     main_ax.set_ylabel("Price, USD")
     main_ax.legend()
     return fig

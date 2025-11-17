@@ -3,7 +3,7 @@ import pandas as pd
 
 # get ticker data from yf, with default fallback params
 # if ticker isn't found raise an exception
-def fetch(ticker: str, period:str = "1y", interval:str = "1d", auto_adjust: bool = True) -> pd.DataFrame:
+def fetch(ticker: str, period:str, interval:str, auto_adjust: bool = True) -> pd.DataFrame:
     try:
         data = yf.download(ticker, period = period, interval = interval, auto_adjust=auto_adjust)
         if (isinstance(data.columns, pd.MultiIndex)):
@@ -12,7 +12,7 @@ def fetch(ticker: str, period:str = "1y", interval:str = "1d", auto_adjust: bool
     except Exception as e:
         raise RuntimeError(f"Failed to fetch {ticker}: {e}")
 
-# function to get the constituents of an index via the FMP API    
+# function to get the constituents of an index via website scraping    
 # index examples: nasdaq, sp500, ftse_100, dax    
 def get_index_constituents(index: str) -> list[str]:
     url = f"https://www.slickcharts.com/{index}"

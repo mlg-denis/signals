@@ -5,20 +5,28 @@ from plotter import get_fig
 import indicators.compute as indct
 from definitions import INDICATORS, VALID_INTERVALS
 
-def handle(ticker, period, interval):
+def handle(ticker, period, interval, indicator_states):
     if interval == "1m":
         assert period == "1d" or period == "5d", "Cannot display 1m interval on periods larger than 5d."
     elif interval[-1] == 'm' or interval == "1h":
         assert period == "1d" or period == "5d" or period == "1mo", f"Cannot display {interval} interval on periods larger than 1mo."
     
+    ticker = ticker.strip()
+
+    # empty string provided
+    if not ticker:
+        st.warning("Enter a ticker symbol to display chart data")
+        return
+    
+    ticker = ticker.upper() # for display purposes
+
     data = fi.fetch(ticker, period.lower(), interval) # rectify difference between display case and parameter case ("Max" vs "max")
+    if data.empty:
+        st.warning(f"No price data found, symbol {ticker} may be delisted")
+        return
 
     # only plot those indicators that have their checkboxes enabled
-    active_indicators = {}
-    for label, enabled in indicator_checkboxes().items():
-        if not enabled:
-            continue
-        active_indicators[label] = INDICATORS[label]   
+    active_indicators = {label: INDICATORS[label] for label, enabled in indicator_states.items() if enabled}  
 
     fig = get_fig(data, ticker, active_indicators)
     st.pyplot(fig)
@@ -36,37 +44,18 @@ def main():
     st.set_page_config(layout="wide")
     st.title("Dashboard")
 
-    #add_checkboxes()
-
     with st.container():
-        index = "sp500"
-        tickers = fi.get_index_constituents(index) + ["VUAG.L"]
-        ticker = st.selectbox(
-            "Select a ticker",
-            tickers,
-            index=0
-        )
-        
-        period = st.radio(
-            "Time range",
-            list(VALID_INTERVALS.keys()),
-            index=0,
-            horizontal=True
-        )
-
-        interval = st.radio(
-            "Interval",
-            VALID_INTERVALS[period],
-            index=0,
-            horizontal=True
-        )
+        ticker = st.text_input("Enter ticker symbol", value = "NVDA", placeholder="e.g. NVDA, SPY, 6869.HK")
+        period = st.radio("Time range", list(VALID_INTERVALS.keys()), index=0, horizontal=True)
+        interval = st.radio("Interval", VALID_INTERVALS[period], index=0, horizontal=True)
 
     st.divider()
 
+    indicator_states = indicator_checkboxes()
+
     load_css("style.css")   
 
-    if ticker:
-        handle(ticker, period, interval)        
+    handle(ticker, period, interval, indicator_states)        
 
 if __name__ == "__main__":
     main()    
