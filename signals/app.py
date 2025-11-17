@@ -34,16 +34,23 @@ def handle(ticker, period, interval, indicator_states):
     # only plot those indicators that have their checkboxes enabled
     enabled_indicators = {label: INDICATORS[label] for label, enabled in indicator_states.items() if enabled}
     
-    run_backtest(data, enabled_indicators)
-    
     fig = get_fig(data, ticker, enabled_indicators)
     st.pyplot(fig)
+
+    if st.button("Run backtest with selection"):
+        trades, strategy_return, buy_and_hold_return = run_backtest(data, enabled_indicators)
+        st.write(f"Return with strategy: {strategy_return}%")
+        st.write(f"Return with buy and hold: {buy_and_hold_return}%")
+        if trades.empty:
+            st.warning("No trades were generated for the current selection.")
+        else:    
+            st.dataframe(trades)
 
 def load_css(filename: str):
     with open(filename) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# pulls the names from INDICATORS and creates a checkbox for eacah one
+# pulls the names from INDICATORS and creates a checkbox for each one
 def indicator_checkboxes() -> dict[str, bool]:
     st.sidebar.header("Technical indicators")
     return {name: st.sidebar.checkbox(name) for name in INDICATORS.keys()}

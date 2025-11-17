@@ -5,11 +5,19 @@ from indicators.compute import detect_crossovers
 DECIMAL_PLACES_OF_RETURN = 2
 
 # long only backtest
-def run_backtest(data: pd.DataFrame, enabled_indicators: dict[str, dict[str, pd.Series | pd.DataFrame | str]]):
-    
+def run_backtest(data: pd.DataFrame, 
+                 enabled_indicators: dict[str, dict[str, pd.Series | pd.DataFrame | str]]):
+
+    if data.empty:
+        print("No data provided, skipping backtest")
+        return pd.DataFrame(), 0.0, 0.0
+
+    buy_and_hold_return = 100 * (data["Close"].iloc[-1] / data["Close"].iloc[0] - 1)
+    buy_and_hold_return = round(buy_and_hold_return, DECIMAL_PLACES_OF_RETURN)
+
     if not enabled_indicators:
         print("No indicators enabled, skipping backtest.")
-        return
+        return pd.DataFrame(), 0.0, buy_and_hold_return
 
     buydates, selldates = [], []
     for short, long in CROSSOVER_PAIRS:
@@ -27,7 +35,7 @@ def run_backtest(data: pd.DataFrame, enabled_indicators: dict[str, dict[str, pd.
 
     if buydates.empty or selldates.empty:
         print("No buy/sell signals to backtest.")
-        return
+        return pd.DataFrame(), 0.0, buy_and_hold_return
 
     selldates = selldates[selldates > buydates.iloc[0]] # first sell happens after a buy
     buydates = buydates[buydates < selldates.iloc[-1]] # last buy happens before a sell
@@ -47,8 +55,8 @@ def run_backtest(data: pd.DataFrame, enabled_indicators: dict[str, dict[str, pd.
     print(trades)
 
     strategy_return = 100 * ((1 + trades["Return"]).prod() - 1)
-    strategy_return = strategy_return.round(DECIMAL_PLACES_OF_RETURN)
-    buy_and_hold_return = 100 * (data["Close"].iloc[-1] / data["Close"].iloc[0] - 1)
-    buy_and_hold_return = buy_and_hold_return.round(DECIMAL_PLACES_OF_RETURN)
+    strategy_return = round(strategy_return, DECIMAL_PLACES_OF_RETURN)
     print(f"Return using strategy: {strategy_return}%")
     print(f"Return using buy and hold: {buy_and_hold_return}%")
+
+    return(trades, strategy_return, buy_and_hold_return)
