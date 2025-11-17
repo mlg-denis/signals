@@ -19,22 +19,27 @@ def flatten_indicators(indicators, data: pd.DataFrame) -> dict[str, pd.Series]:
 # plots any necessary crossover markers
 def plot_crossovers(data, indicators, axes, overlays, oscillators):
 
-    flattened = flatten_indicators(indicators,data) # turn pd.DataFrames into pd.Series
-      
+    flattened = flatten_indicators(indicators, data) # turn any pd.DataFrames into pd.Series
+  
     for short, long in CROSSOVER_PAIRS:
         if short in flattened and long in flattened:
             crossovers = detect_crossovers(flattened[short],flattened[long])
-
+        
             size = 7.5
 
             if short in overlays or long in overlays:
-                ax = axes[0]  # main price axis
+                ax = axes[0]  # main price ax
                 y = data["Close"]
             else:
-                # find oscillator axis that matches one of the names
-                ax = next((a for a, (label, ind) in zip(axes[1:], oscillators.items())
-                        if label in (short, long)), axes[0])
+                # find oscillator ax that matches one of the names
+                for a, label in zip(axes[1:], oscillators.keys()):
+                    if label == short or label == long: # label is in the current crossover pair
+                        ax = a
+                        break
                 y = flattened[short]
+
+            if not ax:
+                raise ValueError(f"No matching ax found for crossover pair ({short}, {long})")    
             
             ax.plot(
                 flattened[short].index[crossovers == 1],

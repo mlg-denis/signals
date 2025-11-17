@@ -10,15 +10,13 @@ def handle(ticker, period, interval, indicator_states):
         assert period == "1d" or period == "5d", "Cannot display 1m interval on periods larger than 5d."
     elif interval[-1] == 'm' or interval == "1h":
         assert period == "1d" or period == "5d" or period == "1mo", f"Cannot display {interval} interval on periods larger than 1mo."
-    
-    ticker = ticker.strip()
 
     # empty string provided
-    if not ticker:
+    if not ticker or ticker.isspace():
         st.warning("Enter a ticker symbol to display chart data")
-        return
+        return 
     
-    ticker = ticker.upper() # for display purposes
+    ticker = ticker.strip().upper() # for display purposes
 
     try:
         data = fi.fetch(ticker, period.lower(), interval) # rectify difference between display case and parameter case ("Max" vs "max")
@@ -55,7 +53,7 @@ def main():
     st.title("Dashboard")
 
     with st.container():
-        ticker = st.text_input("Enter ticker symbol", value = "NVDA", placeholder="e.g. NVDA, SPY, 6869.HK")
+        ticker = st.text_input("Enter ticker symbol", value = None, placeholder="e.g. NVDA, SPY, 6869.HK")
         period = st.radio("Time range", list(VALID_INTERVALS.keys()), index=0, horizontal=True)
         interval = st.radio("Interval", VALID_INTERVALS[period], index=0, horizontal=True)
 
