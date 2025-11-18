@@ -21,33 +21,33 @@ def plot_crossovers(data, indicators, axes, overlays, oscillators):
 
     flattened = flatten_indicators(indicators, data) # turn any pd.DataFrames into pd.Series
   
-    for short, long in CROSSOVER_PAIRS:
-        if short in flattened and long in flattened:
-            crossovers = detect_crossovers(flattened[short],flattened[long])
+    for fast, slow in CROSSOVER_PAIRS:
+        if fast in flattened and slow in flattened:
+            crossovers = detect_crossovers(flattened[fast],flattened[slow])
         
             size = 7.5
 
-            if short in overlays or long in overlays:
+            if fast in overlays or slow in overlays:
                 ax = axes[0]  # main price ax
                 y = data["Close"]
             else:
                 # find oscillator ax that matches one of the names
                 for a, label in zip(axes[1:], oscillators.keys()):
-                    if label == short or label == long: # label is in the current crossover pair
+                    if label == fast or label == slow: # label is in the current crossover pair
                         ax = a
                         break
-                y = flattened[short]
+                y = flattened[fast]
 
             if not ax:
-                raise ValueError(f"No matching ax found for crossover pair ({short}, {long})")    
+                raise ValueError(f"No matching ax found for crossover pair ({fast}, {slow})")    
             
             ax.plot(
-                flattened[short].index[crossovers == 1],
+                flattened[fast].index[crossovers == 1],
                 y[crossovers == 1],
                 marker="^", color="green", linestyle="none", markersize = size, label="Bullish Crossover"
             )
             ax.plot(
-                flattened[short].index[crossovers == -1],
+                flattened[fast].index[crossovers == -1],
                 y[crossovers == -1],
                 marker="v", color="red", linestyle="none", markersize = size, label="Bearish Crossover"
             )

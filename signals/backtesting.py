@@ -20,17 +20,24 @@ def run_backtest(data: pd.DataFrame,
         return pd.DataFrame(), 0.0, buy_and_hold_return
 
     buydates, selldates = [], []
-    for short, long in CROSSOVER_PAIRS:
-        if short in enabled_indicators and long in enabled_indicators:
-            s_series = enabled_indicators[short]["fn"](data)
-            l_series = enabled_indicators[long]["fn"](data)
+    for fast, slow in CROSSOVER_PAIRS:
+        if fast in enabled_indicators and slow in enabled_indicators: # overlay type
+            f_series = enabled_indicators[fast]["fn"](data)
+            s_series = enabled_indicators[slow]["fn"](data)
 
-            crossovers: pd.Series = detect_crossovers(s_series, l_series)
-            crossovers = crossovers.shift(1).fillna(0) # once a signal is detected at an interval, trades can only happen at the next interval, so shift by 1 and replace NaNs with 0
+        # IMPORTANT: this assumes that the slow line is always derived from the fast line - is this ever not the case?
+        elif fast in enabled_indicators:
+            result: pd.DataFrame = enabled_indicators[fast]["fn"](data)
+            f_series = result[fast]
+            s_series = result[slow]
+        else: continue    
 
-            buydates.extend(crossovers.index[crossovers == 1])
-            selldates.extend(crossovers.index[crossovers == -1])
-            n = min(len(selldates), len(buydates))
+        crossovers: pd.Series = detect_crossovers(f_series, s_series)
+        crossovers = crossovers.shift(1).fillna(0) # once a signal is detected at an interval, trades can only happen at the next interval, so shift by 1 and replace NaNs with 0
+
+        buydates.extend(crossovers.index[crossovers == 1])
+        selldates.extend(crossovers.index[crossovers == -1])
+        n = min(len(selldates), len(buydates))
 
     buydates = pd.Series(buydates)
     selldates = pd.Series(selldates)
