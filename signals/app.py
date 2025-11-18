@@ -39,7 +39,7 @@ def handle(ticker, period, interval, indicator_states):
 
     if st.button("Run backtest with selection"):
         trades, strategy_return, buy_and_hold_return = run_backtest(data, enabled_indicators)
-        st.write(f"Return with strategy: {strategy_return}%")
+        st.write(f"Return using strategy: {strategy_return}%")
         st.write(f"Return with buy and hold: {buy_and_hold_return}%")
         if trades.empty:
             st.warning("No trades were generated for the current selection.")

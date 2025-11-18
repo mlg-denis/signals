@@ -18,51 +18,65 @@ def run_backtest(data: pd.DataFrame,
     if not enabled_indicators:
         print("No indicators enabled, skipping backtest.")
         return pd.DataFrame(), 0.0, buy_and_hold_return
+    
+    signals = pd.Series(0, index=data.index) 
 
-    buydates, selldates = [], []
     for parent, fast, slow in CROSSOVER_PAIRS:
-        if fast in enabled_indicators and slow in enabled_indicators: # overlay type
+        if fast in enabled_indicators and slow in enabled_indicators:
             f_series = enabled_indicators[fast]["fn"](data)
             s_series = enabled_indicators[slow]["fn"](data)
-
-        # slow line is always derived from fast line, not vice versa
         elif parent in enabled_indicators:
             result = enabled_indicators[parent]["fn"](data)
-            f_series = result[fast]
-            s_series = result[slow]
+            f_series, s_series = result[fast], result[slow]
         else:
-            continue
-        
-        crossovers: pd.Series = detect_crossovers(f_series, s_series)
-        crossovers = crossovers.shift(1).fillna(0) # once a signal is detected at an interval, trades can only happen at the next interval, so shift by 1 and replace NaNs with 0
+            continue    
 
-        buydates.extend(crossovers.index[crossovers == 1])
-        selldates.extend(crossovers.index[crossovers == -1])
-        n = min(len(selldates), len(buydates))
+        aligned = pd.concat([f_series, s_series], axis=1, join="inner").dropna() # only consider points when both series have values
+        f_series, s_series = aligned.iloc[:, 0], aligned.iloc[:, 1]    
+        crossovers = detect_crossovers(f_series, s_series).shift(1).fillna(0) # can only trade on the interval after crossover detected
 
-    buydates = pd.Series(buydates)
-    selldates = pd.Series(selldates)
+        signals = signals.add(crossovers.reindex(signals.index, fill_value=0), fill_value=0)
+        # signals is now filled with -1 (exit position), 0 (status quo), 1 (enter position) 
 
-    if buydates.empty or selldates.empty:
-        print("No buy/sell signals to backtest.")
-        return pd.DataFrame(), 0.0, buy_and_hold_return
+    trades = []
+    in_position = False
+    entry_date = None
+    entry_price = None
 
-    selldates = selldates[selldates > buydates.iloc[0]] # first sell happens after a buy
-    buydates = buydates[buydates < selldates.iloc[-1]] # last buy happens before a sell
-    buydates, selldates = buydates.iloc[:n], selldates.iloc[:n] # truncate to ensure pairings - redundant when using crossovers because they will be off by at most 1
+    for date, signal in signals.items():
+        price = data.loc[date, "Close"]
 
-    # drop the old date index to align by order instead of date label
-    buyprices = data.loc[buydates, "Close"].reset_index(drop=True)
-    sellprices = data.loc[selldates, "Close"].reset_index(drop=True)
+        if not in_position and signal == 1:
+            entry_date = date
+            entry_price = price
+            in_position = True
 
-    trades = pd.DataFrame({
-        "Buy Date": buydates,
-        "Buy Price": buyprices,
-        "Sell Date": selldates,
-        "Sell Price": sellprices,
-        "Return": sellprices / buyprices - 1 # rate of return
-    })
-    print(trades)
+        elif in_position and signal == -1:
+            exit_date = date
+            exit_price = price
+            trades.append({
+                "Entry Date": entry_date,
+                "Entry Price": entry_price,
+                "Exit Date": exit_date,
+                "Exit Price": exit_price,
+                "Return": (exit_price / entry_price) - 1
+            })
+            entry_date = None
+            entry_price = None
+            in_position = False
+
+    if in_position: # if last signal is a buy signal, force close position at end of time period
+        exit_date = data.index[-1]
+        exit_price = data["Close"].iloc[-1]
+        trades.append({
+            "Entry Date": entry_date,
+            "Entry Price": entry_price,
+            "Exit Date": exit_date,
+            "Exit Price": exit_price,
+            "Return": (exit_price / entry_price) - 1
+        })
+
+    trades = pd.DataFrame(trades)     
 
     strategy_return = 100 * ((1 + trades["Return"]).prod() - 1)
     strategy_return = round(strategy_return, DECIMAL_PLACES_OF_RETURN)
