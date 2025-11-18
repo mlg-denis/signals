@@ -5,31 +5,46 @@ from plotter import get_fig
 import indicators.compute as indct
 from definitions import INDICATORS, VALID_INTERVALS
 
-def handle(ticker, period, interval, indicator_states):
+def validate_inputs(ticker: str, period: str, interval: str) -> str | None:
     if interval == "1m":
-        assert period == "1d" or period == "5d", "Cannot display 1m interval on periods larger than 5d."
-    elif interval[-1] == 'm' or interval == "1h":
-        assert period == "1d" or period == "5d" or period == "1mo", f"Cannot display {interval} interval on periods larger than 1mo."
-
-    # empty string provided
+        assert period in ("1d", "5d"), "Cannot display 1m interval on periods larger than 5d."
+    elif interval.endswith("m") or interval == "1h":
+        assert period in ("1d", "5d", "1mo"), f"Cannot display {interval} interval on periods larger than 1mo."
     if not ticker or ticker.isspace():
         st.warning("Enter a ticker symbol to display chart data")
-        return 
-    
-    ticker = ticker.strip().upper() # for display purposes
+        return None
+    return ticker.strip().upper() # so that "  nvda" shows as "NVDA"
 
+def get_data(ticker, period, interval):
     try:
-        data = fi.fetch(ticker, period.lower(), interval) # rectify difference between display case and parameter case ("Max" vs "max")
+        data = fi.fetch(ticker, period.lower(), interval)
         if data.empty:
             st.warning(f"No price data found, symbol {ticker} may be delisted")
-            return
-    except RuntimeError as e:
+            return None
+        return data
+    except RuntimeError:
         st.error(f"Failed to fetch data for {ticker} - is Yahoo Finance down?")
-        return
     except Exception as e:
         st.error(f"Unexpected error while fetching {ticker} data: {e}")
+    return None
+
+def backtest(data, enabled_indicators):
+    trades, strategy_return, buy_and_hold_return = run_backtest(data, enabled_indicators)
+    st.write(f"Return using strategy: {strategy_return}%")
+    st.write(f"Return with buy and hold: {buy_and_hold_return}%")
+    if trades.empty:
+        st.warning("No trades were generated for the current selection.")
+    else:    
+        st.dataframe(trades)
+
+def handle(ticker, period, interval, indicator_states):
+    ticker = validate_inputs(ticker, period, interval)
+    if not ticker:
         return
 
+    data = get_data(ticker, period, interval)
+    if data is None:
+        return
 
     # only plot those indicators that have their checkboxes enabled
     enabled_indicators = {label: INDICATORS[label] for label, enabled in indicator_states.items() if enabled}
@@ -38,13 +53,7 @@ def handle(ticker, period, interval, indicator_states):
     st.pyplot(fig)
 
     if st.button("Run backtest with selection"):
-        trades, strategy_return, buy_and_hold_return = run_backtest(data, enabled_indicators)
-        st.write(f"Return using strategy: {strategy_return}%")
-        st.write(f"Return with buy and hold: {buy_and_hold_return}%")
-        if trades.empty:
-            st.warning("No trades were generated for the current selection.")
-        else:    
-            st.dataframe(trades)
+        backtest(data, enabled_indicators)
 
 def load_css(filename: str):
     with open(filename) as f:

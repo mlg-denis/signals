@@ -19,7 +19,8 @@ def get_index_constituents(index: str) -> list[str]:
     try:
         dfs = pd.read_html(io=url)
     except Exception as e:
-        print(f"Error gathering {index} constituents: {e}")    
+        print(f"Error gathering {index} constituents: {e}")
+        return [] 
     else:
         data = dfs[0] # this happens to be the table at this url containing the constituents
         return list(data["Symbol"]) 
